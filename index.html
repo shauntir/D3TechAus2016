@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+
+    <style>
+        body {
+            text-align: center;
+        }
+         .arc text {
+             font: 10px sans-serif;
+             text-anchor: middle;
+             font-size: 12px;
+         }
+
+        .arc path {
+            stroke: #fff;
+        }
+    </style>
+
+</head>
+
+<body>
+<h2>2016 Top 10 StackOverflow Most Used Tech In Australia</h2>
+<script>
+    var width = 960,
+        height = 500,
+        radius = Math.min(width, height) / 2;
+
+    var arc = d3.svg.arc()
+        .outerRadius(radius - 10)
+        .innerRadius(radius - 70);
+
+    var pie = d3.layout.pie()
+        .sort(null)
+        .value(function(d) { return d[1]; });
+
+    var svg = d3.select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+
+    d3.csv("TechUsedAustralia2016.csv",
+        function(d) {
+            return d.tech_do;
+
+        },
+        function(error, source) {
+            if (error) throw error;
+
+            var allKeys = source.join(";");
+            var allKeysArray = _.toPairs(_.countBy(allKeys.split(";").map(tech => tech.trim())));
+            allKeysArray = _.sortBy(allKeysArray, [function(o) { return -o[1]; }]);
+            
+            allKeysArray = _.shuffle(_.take(allKeysArray, 10));
+
+            var g = svg.selectAll(".arc")
+                .data(pie(allKeysArray))
+                .enter()
+                .append("g")
+                .attr("class", "arc");
+
+            g.append("path")
+                .attr("d", arc)
+                .style("fill",
+                    function(d) {
+                        var red = _.random(80, 180);
+                        var green = _.random(90, 190);
+                        var blue = _.random(120, 240);
+                        return `rgb(${red}, ${green}, ${blue})`;
+                    });
+
+            g.append("text")
+                .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+                .attr("dy", ".60em")
+                .text(function(d) { return `${d.data[0]} (${d.data[1]})`; });
+        });
+</script>
+</body>
+</html>
